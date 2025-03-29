@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import NotificationService from '../utils/NotificationService';
 
 const TransferForm = ({ accounts, onTransferComplete }) => {
     const [formData, setFormData] = useState({
@@ -11,6 +12,10 @@ const TransferForm = ({ accounts, onTransferComplete }) => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        NotificationService.requestPermission();
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -18,7 +23,7 @@ const TransferForm = ({ accounts, onTransferComplete }) => {
         
         try {
             const token = localStorage.getItem('token');
-            await axios.post(
+            const response = await axios.post(
                 'http://localhost:5000/api/transactions/transfer',
                 formData,
                 {
@@ -27,6 +32,14 @@ const TransferForm = ({ accounts, onTransferComplete }) => {
                     }
                 }
             );
+            
+            NotificationService.showTransactionNotification(
+                'sent',
+                formData.amount,
+                formData.fromAccountId,
+                formData.toAccountNumber
+            );
+
             onTransferComplete();
             setFormData({ fromAccountId: '', toAccountNumber: '', amount: '', description: '' });
         } catch (error) {

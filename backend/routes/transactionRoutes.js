@@ -59,7 +59,27 @@ router.post('/transfer', auth, async (req, res) => {
 
         await transaction.save();
 
-        res.json({ message: 'Transfer successful', transaction });
+        // Get user details for better notifications
+        const fromUser = await User.findById(req.user.id);
+        const toUser = await User.findById(toAccount.userId);
+
+        res.json({
+            message: 'Transfer successful',
+            transaction,
+            details: {
+                fromAccount: {
+                    number: fromAccount.accountNumber,
+                    newBalance: fromAccount.balance,
+                    holderName: `${fromUser.firstName} ${fromUser.lastName}`
+                },
+                toAccount: {
+                    number: toAccount.accountNumber,
+                    newBalance: toAccount.balance,
+                    holderName: toUser ? `${toUser.firstName} ${toUser.lastName}` : 'Unknown'
+                },
+                amount: transferAmount
+            }
+        });
 
     } catch (error) {
         console.error('Transfer error:', error);
